@@ -1,0 +1,55 @@
+---
+title: "homework10"
+author: "Michael Mila"
+date: "4/13/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Team Members:
+- Michael Mila
+- Wei Herm Lim
+ 
+# Github
+https://github.com/mmila38/ds202-hw10
+
+```{r}
+library(tidyverse)
+library(maps)
+```
+
+# Load the accident data, plot latitude and longitude on a map.
+
+```{r}
+
+accident = read.csv("https://raw.githubusercontent.com/yumouqiu/DS202-Spring2022/main/Practice/data/fars2016/accident.csv")
+
+accident.temp = accident %>% filter(LONGITUD < 750)
+accident.temp %>% ggplot(aes(x = LONGITUD, y = LATITUDE)) + geom_point()
+```
+
+# Part 1
+
+```{r}
+# Are there some days of the week where more accidents happen?
+
+accident %>% group_by(DAY_WEEK) %>% tally()
+accident %>% ggplot(aes(x = DAY_WEEK)) + 
+  xlab("Day of the Week") +
+  geom_bar()
+
+## It appears that the weekdays have fewer accidents than the weekends.
+
+# What time of day do accidents happen?
+accident.hour = accident %>% filter(HOUR <= 24) %>% group_by(HOUR) %>% summarise(n = n()) 
+accident.hour %>% ggplot(aes(x = HOUR)) + geom_bar(aes(weight = n))
+
+## What is the number of accidents with at least one drunk driver?
+
+table(accident$DRUNK_DR)
+```
+
+# Part 2
