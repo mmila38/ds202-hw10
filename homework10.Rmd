@@ -25,10 +25,23 @@ library(maps)
 
 ```{r}
 
-accident = read.csv("https://raw.githubusercontent.com/yumouqiu/DS202-Spring2022/main/Practice/data/fars2016/accident.csv")
+# the accident.csv file has to be in the same directory as the rmd file
+
+accident = read.csv("accident.csv")
 
 accident.temp = accident %>% filter(LONGITUD < 750)
 accident.temp %>% ggplot(aes(x = LONGITUD, y = LATITUDE)) + geom_point()
+
+states <- map_data("state")
+
+states %>% ggplot(aes(x = long, y = lat)) + 
+  geom_path(aes(group = group)) +
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'red', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130))
+
+states %>% ggplot(aes(x = long, y = lat)) + 
+  geom_path(aes(group = group)) +
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'red', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130, DRUNK_DR == 1)) + 
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'blue', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130, DRUNK_DR == 0))
 ```
 
 # Part 1
@@ -50,6 +63,25 @@ accident.hour %>% ggplot(aes(x = HOUR)) + geom_bar(aes(weight = n))
 ## What is the number of accidents with at least one drunk driver?
 
 table(accident$DRUNK_DR)
+
+# There were 8474 accidents with 1 drunk driver.
 ```
 
 # Part 2
+
+```{r}
+# Connect to the person table. Identify drivers (PER_TYP == 1, see fars manual ) and subset on them.
+person = read.csv("person.csv")
+
+driver <- person %>%
+  filter(PER_TYP == 1)
+
+## Join accident and driver table
+
+df <- accident %>%
+  full_join(driver, by = c('STATE', 'ST_CASE', 'COUNTY', 'DAY', 'MONTH', 'HOUR', 'MINUTE'))
+
+View(df)
+## Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results!
+
+```
