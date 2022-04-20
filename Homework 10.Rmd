@@ -1,0 +1,85 @@
+---
+title: "Homework 10"
+author: "Wei Hern Lim"
+date: "4/19/2022"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Team Members:
+- Michael Mila
+- Wei Herm Lim
+
+# Github
+https://github.com/mmila38/ds202-hw10
+
+```{r}
+library(tidyverse)
+library(maps)
+```
+
+# Load the accident data, plot latitude and longitude on a map.
+
+```{r}
+# the accident.csv file has to be in the same directory as the rmd file
+accident = read.csv("accident.csv")
+accident.temp = accident %>% filter(LONGITUD < 750)
+accident.temp %>% ggplot(aes(x = LONGITUD, y = LATITUDE)) + geom_point()
+states <- map_data("state")
+states %>% ggplot(aes(x = long, y = lat)) + 
+  geom_path(aes(group = group)) +
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'red', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130))
+states %>% ggplot(aes(x = long, y = lat)) + 
+  geom_path(aes(group = group)) +
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'red', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130, DRUNK_DR == 1)) + 
+  geom_point(aes(x = LONGITUD, y = LATITUDE), size = 0.05, color = 'blue', data = accident.temp %>% filter(YEAR == 2016, LONGITUD < 0, LONGITUD > -130, DRUNK_DR == 0))
+```
+
+# Part 1
+
+```{r}
+# Are there some days of the week where more accidents happen?
+accident %>% group_by(DAY_WEEK) %>% tally()
+accident %>% ggplot(aes(x = DAY_WEEK)) + 
+  xlab("Day of the Week") +
+  geom_bar()
+## It appears that the weekdays have fewer accidents than the weekends.
+# What time of day do accidents happen?
+accident.hour = accident %>% filter(HOUR <= 24) %>% group_by(HOUR) %>% summarise(n = n()) 
+accident.hour %>% ggplot(aes(x = HOUR)) + geom_bar(aes(weight = n))
+## What is the number of accidents with at least one drunk driver?
+table(accident$DRUNK_DR)
+# There were 8474 accidents with 1 drunk driver.
+```
+
+# Part 2
+
+```{r}
+# Connect to the person table. Identify drivers (PER_TYP == 1, see fars manual ) and subset on them.
+person = read.csv("person.csv")
+driver <- person %>%
+  filter(PER_TYP == 1)
+
+
+driver$SEX = as.factor(driver$SEX)
+levels(driver$SEX)
+# According to documentation, 1 = MALE, 2 = FEMALE, 8 = NOT REPORTED, 9 = UNKNOWN
+levels(driver$SEX) = c("Male", "Female", "Not Reported", "Unknown")
+levels(driver$SEX)
+
+## Join accident and driver table
+driver_accident = inner_join(driver, accident.temp, by = "ST_CASE")
+
+## Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results!
+
+driver_accident_cleaned = driver_accident %>% filter(HOUR.x <= 24, (SEX == "Male" | SEX == "Female"))
+driver_accident_cleaned %>% ggplot(aes(x = HOUR.x, fill = SEX)) + 
+  geom_bar() + facet_wrap(~DAY_WEEK) + 
+  labs(x = "Hour of the Day", y = "Count", title = "Accidents by Gender")
+```
+
+
+
